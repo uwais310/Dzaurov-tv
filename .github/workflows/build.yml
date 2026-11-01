@@ -1,0 +1,35 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack project
+        run: unzip -q -o DzaurovTV-2.0.zip
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: Build
+        working-directory: DzaurovTV
+        run: |
+          set -o pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug 2>&1 | tee ../build.log
+          cp app/build/outputs/apk/debug/app-debug.apk ../DzaurovTV-debug.apk
+      - name: Short error report
+        if: failure()
+        run: |
+          { echo '```'; grep -E "^e: |error:|What went wrong|Unresolved reference|Execution failed" build.log | head -60 || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Dzaurov TV build ${{ github.run_number }}
+          files: DzaurovTV-debug.apk
+          make_latest: true
