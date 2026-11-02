@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
@@ -142,12 +146,21 @@ private val MOTES: List<Mote> = List(12) { i ->
     )
 }
 
+/**
+ * Fog and particles move so slowly that 20 updates a second look the same as 60, and the box's
+ * GPU gets two thirds of its time back for the tiles. One fog layer, not two.
+ */
 @Composable
 private fun Atmosphere(fog: ImageBitmap?, particles: Boolean) {
-    val t = rememberInfiniteTransition(label = "atmosphere")
-    val a = t.animateFloat(0f, 1f, infiniteRepeatable(tween(48_000, easing = LinearEasing)), label = "fogA")
-    val b = t.animateFloat(0f, 1f, infiniteRepeatable(tween(74_000, easing = LinearEasing)), label = "fogB")
-    val p = t.animateFloat(0f, 1f, infiniteRepeatable(tween(26_000, easing = LinearEasing)), label = "motes")
+    val clock = produceState(0L) {
+        val start = System.nanoTime()
+        while (true) {
+            value = (System.nanoTime() - start) / 1_000_000L
+            delay(50)
+        }
+    }
+    val a = remember { derivedStateOf { (clock.value % 48_000L) / 48_000f } }
+    val p = remember { derivedStateOf { (clock.value % 26_000L) / 26_000f } }
     Canvas(Modifier.fillMaxSize()) {
         val w = size.width
         val h = size.height
@@ -159,11 +172,6 @@ private fun Atmosphere(fog: ImageBitmap?, particles: Boolean) {
             val x1 = (-a.value * fw).roundToInt()
             drawImage(fog, IntOffset.Zero, src, IntOffset(x1, top), IntSize(fw, fh), alpha = 0.7f, filterQuality = FilterQuality.Low)
             drawImage(fog, IntOffset.Zero, src, IntOffset(x1 + fw, top), IntSize(fw, fh), alpha = 0.7f, filterQuality = FilterQuality.Low)
-            val fw2 = (w * 1.25f).roundToInt()
-            val top2 = (h * 0.13f).roundToInt()
-            val x2 = (b.value * fw2).roundToInt() - fw2
-            drawImage(fog, IntOffset.Zero, src, IntOffset(x2, top2), IntSize(fw2, fh), alpha = 0.42f, filterQuality = FilterQuality.Low)
-            drawImage(fog, IntOffset.Zero, src, IntOffset(x2 + fw2, top2), IntSize(fw2, fh), alpha = 0.42f, filterQuality = FilterQuality.Low)
         }
         if (particles) {
             val unit = density

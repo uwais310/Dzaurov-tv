@@ -12,8 +12,8 @@ android {
         applicationId = "com.dzaurov.tv"
         minSdk = 30
         targetSdk = 34
-        versionCode = 3
-        versionName = "2.0"
+        versionCode = 4
+        versionName = "2.1"
     }
 
     // A fixed debug key is committed in the repo, so every build (your laptop or GitHub)
@@ -31,8 +31,12 @@ android {
         debug {
             signingConfig = signingConfigs.getByName("debug")
         }
+        // The box runs the release build: optimised by R8 and not debuggable, which makes
+        // Compose several times smoother than a debug build.
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("debug")
         }
     }
