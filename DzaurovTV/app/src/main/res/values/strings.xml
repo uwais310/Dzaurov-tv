@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dzaurov TV</string>
+    <string name="dream_label">Dzaurov Ambient</string>
+    <string name="a11y_label">Dzaurov TV · Home button and sleep</string>
+    <string name="a11y_description">Lets the remote\'s Home button open Dzaurov TV and lets Dzaurov TV put the box to sleep (screensaver timer and sleep timer). It only notices which app opens; it never reads what is on screen.</string>
+</resources>

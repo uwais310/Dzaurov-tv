@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="room">#FF07090F</color>
+
+    <!-- Dark window from the very first frame, so a cold start never flashes white. -->
+    <style name="Theme.DzaurovTV" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@color/room</item>
+        <item name="android:colorBackground">@color/room</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowDisablePreview">false</item>
+        <item name="android:statusBarColor">@color/room</item>
+        <item name="android:navigationBarColor">@color/room</item>
+    </style>
+</resources>
