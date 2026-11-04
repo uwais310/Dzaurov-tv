@@ -96,9 +96,8 @@ private fun DreamContent() {
         ) {
             BackdropLayer(
                 state = backdrop,
-                wash = null,
                 dim = 0f,
-                atmosphere = !prefs.performance,
+                atmosphere = prefs.liveBg && !prefs.performance,
                 particles = prefs.particles,
                 kenBurns = !prefs.performance,
             )
