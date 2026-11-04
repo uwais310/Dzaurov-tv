@@ -132,10 +132,8 @@ fun HomeScreen(vm: MainViewModel, perf: Boolean, now: LocalDateTime) {
 
     fun focusChanged(f: HomeFocus, index: Int, count: Int, row: Int = ROW_FAV) {
         vm.onHomeFocus(f)
-        val frac = if (count <= 1) 0.5f else index / (count - 1f)
-        scope.launch {
-            backdrop.parallax.animateTo((frac * 2f - 1f) * maxShift, spring(dampingRatio = 1f, stiffness = 40f))
-        }
+        // No background parallax any more: moving the picture on every press made the box
+        // redraw the whole screen and every glass tile for a second and a half.
         scope.launch {
             val target = if (row == ROW_REC) scroll.maxValue else 0
             if (scroll.value != target) scroll.animateScrollTo(target, spring(dampingRatio = 0.85f, stiffness = 220f))

@@ -26,6 +26,10 @@ data class UiPrefs(
     val customVersion: Long = 0L,
     val particles: Boolean = true,
     val performance: Boolean = false,
+    /** Drifting fog and floating lights. Off by default: it redraws the whole screen all the time. */
+    val liveBg: Boolean = false,
+    /** Small frame-rate meter in the corner, to see how smooth the box really is. */
+    val showFps: Boolean = false,
     val favorites: List<String> = emptyList(),
     val hidden: Set<String> = emptySet(),
     val recents: List<Recent> = emptyList(),
@@ -52,6 +56,8 @@ class Prefs(context: Context) {
         val customVersion = longPreferencesKey("custom_version")
         val particles = booleanPreferencesKey("particles")
         val performance = booleanPreferencesKey("performance")
+        val liveBg = booleanPreferencesKey("live_bg")
+        val showFps = booleanPreferencesKey("show_fps")
         val favorites = stringPreferencesKey("favorites")
         val hidden = stringSetPreferencesKey("hidden")
         val recents = stringPreferencesKey("recents")
@@ -71,6 +77,8 @@ class Prefs(context: Context) {
                 customVersion = p[K.customVersion] ?: 0L,
                 particles = p[K.particles] ?: true,
                 performance = p[K.performance] ?: false,
+                liveBg = p[K.liveBg] ?: false,
+                showFps = p[K.showFps] ?: false,
                 favorites = favs(p),
                 hidden = p[K.hidden] ?: emptySet(),
                 recents = parseRecents(p[K.recents]),
@@ -103,6 +111,14 @@ class Prefs(context: Context) {
 
     suspend fun setPerformance(on: Boolean) {
         ds.edit { it[K.performance] = on }
+    }
+
+    suspend fun setLiveBg(on: Boolean) {
+        ds.edit { it[K.liveBg] = on }
+    }
+
+    suspend fun setShowFps(on: Boolean) {
+        ds.edit { it[K.showFps] = on }
     }
 
     suspend fun setAmbientMin(min: Int) {

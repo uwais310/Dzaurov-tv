@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
- * A background, decoded once: the full 1920×1080 picture plus a small pre-blurred copy.
+ * A background, decoded once: the picture at the screen's own size plus a small pre-blurred copy.
  * The glass panels draw the blurred copy behind themselves, which looks like live blur
  * but costs almost nothing (Android 11 has no live blur anyway).
  */
@@ -25,17 +25,17 @@ class BackgroundStore(private val context: Context) {
     private var fog: ImageBitmap? = null
 
     /** Pictures shipped with the app, best first. "auto" and "custom" are handled separately. */
-    val themes = listOf("alatau", "aurora", "glow", "forest", "dusk", "night", "fog")
+    val themes = listOf("forest", "taiga", "alatau", "dusk", "night", "fog", "aurora", "glow")
 
     /** Themes that look right with drifting fog over them. */
-    private val foggy = setOf("alatau", "forest", "dusk", "fog")
+    private val foggy = setOf("alatau", "dusk", "fog")
 
-    /** "auto" follows the time of day: misty morning, forest by day, Alatau at sunset, aurora at night. */
+    /** "auto" follows the time of day: misty morning, forest by day, sunset lake, mountains at night. */
     fun resolve(theme: String, hour: Int): String = if (theme != AUTO) theme else when (hour) {
         in 5..9 -> "fog"
         in 10..16 -> "forest"
-        in 17..20 -> "alatau"
-        else -> "aurora"
+        in 17..19 -> "dusk"
+        else -> "night"
     }
 
     fun label(theme: String): String = when (theme) {
@@ -82,15 +82,37 @@ class BackgroundStore(private val context: Context) {
         }.getOrNull()
     }
 
-    private fun decodeAsset(name: String): Bitmap =
-        context.assets.open("bg/$name.jpg").use {
-            BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 })
-        } ?: error("Couldn't decode background $name")
+    /**
+     * The photos are 4K. Decode them at the screen's size (1920 wide on most boxes), not 4K:
+     * a quarter of the memory and of the work for the GPU, and it looks the same on a 1080p UI.
+     */
+    private fun sampleFor(width: Int): Int {
+        val target = maxOf(context.resources.displayMetrics.widthPixels, 1280)
+        var sample = 1
+        while (width / (sample * 2) >= target) sample *= 2
+        return sample
+    }
 
-    private fun decodeFile(f: File): Bitmap? = runCatching { BitmapFactory.decodeFile(f.path) }.getOrNull()
+    private fun options(width: Int) = BitmapFactory.Options().apply {
+        inSampleSize = sampleFor(width)
+        inPreferredConfig = Bitmap.Config.ARGB_8888
+    }
+
+    private fun decodeAsset(name: String): Bitmap {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.assets.open("bg/$name.jpg").use { BitmapFactory.decodeStream(it, null, bounds) }
+        return context.assets.open("bg/$name.jpg").use { BitmapFactory.decodeStream(it, null, options(bounds.outWidth)) }
+            ?: error("Couldn't decode background $name")
+    }
+
+    private fun decodeFile(f: File): Bitmap? = runCatching {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(f.path, bounds)
+        BitmapFactory.decodeFile(f.path, options(bounds.outWidth))
+    }.getOrNull()
 
     companion object {
         const val AUTO = "auto"
-        const val FALLBACK = "alatau"
+        const val FALLBACK = "forest"
     }
 }

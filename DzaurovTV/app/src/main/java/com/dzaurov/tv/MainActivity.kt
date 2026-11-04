@@ -29,6 +29,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Frame timings for the optional FPS meter (Settings → Show FPS). Cheap: Android
+        // reports them anyway, on a background thread.
+        val statsThread = android.os.HandlerThread("frame-stats").apply { start() }
+        window.addOnFrameMetricsAvailableListener({ _, m, _ ->
+            com.dzaurov.tv.ui.components.FrameStats.add(
+                m.getMetric(android.view.FrameMetrics.INTENDED_VSYNC_TIMESTAMP),
+                m.getMetric(android.view.FrameMetrics.TOTAL_DURATION),
+            )
+        }, android.os.Handler(statsThread.looper))
         setContent {
             DzaurovTheme {
                 Root(vm = vm, onBackOnHome = ::onBackOnHome)

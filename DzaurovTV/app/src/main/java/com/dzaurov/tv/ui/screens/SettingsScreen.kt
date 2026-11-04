@@ -122,8 +122,26 @@ fun SettingsScreen(vm: MainViewModel) {
             item {
                 SettingRow(
                     icon = DzIcons.Sparkle,
+                    title = "Living background",
+                    subtitle = "Drifting fog and lights. Looks nice, but costs smoothness on the box.",
+                    value = if (prefs.liveBg) "On" else "Off",
+                    onClick = { vm.setLiveBg(!prefs.liveBg) },
+                )
+            }
+            item {
+                SettingRow(
+                    icon = DzIcons.Bolt,
+                    title = "Show FPS",
+                    subtitle = "Frame-rate meter in the corner, to check how smooth it runs",
+                    value = if (prefs.showFps) "On" else "Off",
+                    onClick = { vm.setShowFps(!prefs.showFps) },
+                )
+            }
+            item {
+                SettingRow(
+                    icon = DzIcons.Sparkle,
                     title = "Particles",
-                    subtitle = "Small floating lights over the background",
+                    subtitle = "Floating lights, when the living background is on",
                     value = if (prefs.particles) "On" else "Off",
                     onClick = { vm.setParticles(!prefs.particles) },
                 )

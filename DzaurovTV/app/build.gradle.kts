@@ -12,8 +12,8 @@ android {
         applicationId = "com.dzaurov.tv"
         minSdk = 30
         targetSdk = 34
-        versionCode = 4
-        versionName = "2.1"
+        versionCode = 5
+        versionName = "3.0"
     }
 
     // A fixed debug key is committed in the repo, so every build (your laptop or GitHub)

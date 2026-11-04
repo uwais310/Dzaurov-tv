@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -37,6 +38,7 @@ import com.dzaurov.tv.ui.screens.AmbientScreen
 import com.dzaurov.tv.ui.screens.AppsScreen
 import com.dzaurov.tv.ui.screens.ControlCenter
 import com.dzaurov.tv.ui.screens.HiddenAppsScreen
+import com.dzaurov.tv.ui.components.FpsMeter
 import com.dzaurov.tv.ui.screens.HomeScreen
 import com.dzaurov.tv.ui.screens.PhotosScreen
 import com.dzaurov.tv.ui.screens.SearchScreen
@@ -50,7 +52,6 @@ fun Root(vm: MainViewModel, onBackOnHome: () -> Unit) {
     val screen by vm.screen.collectAsStateWithLifecycle()
     val weather by vm.weather.collectAsStateWithLifecycle()
     val net by vm.network.collectAsStateWithLifecycle()
-    val homeFocus by vm.homeFocus.collectAsStateWithLifecycle()
     val menu by vm.menu.collectAsStateWithLifecycle()
     val prompt by vm.prompt.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
@@ -71,11 +72,6 @@ fun Root(vm: MainViewModel, onBackOnHome: () -> Unit) {
         if (screen != Screen.Home) backdrop.parallax.animateTo(0f, spring(dampingRatio = 1f, stiffness = 60f))
     }
 
-    // Brand-color wash behind Home, from the focused app's own colours.
-    val washApp = if (screen == Screen.Home) homeFocus?.app else null
-    val wash by produceState<Color?>(null, washApp, prefs.performance) {
-        value = if (washApp == null) null else context.dz.icons.load(washApp)?.color
-    }
 
     BackHandler {
         if (!vm.onBack()) onBackOnHome()
@@ -92,10 +88,9 @@ fun Root(vm: MainViewModel, onBackOnHome: () -> Unit) {
                 .onFocusChanged { vm.rootHasFocus = it.hasFocus }
         ) {
             val ambient = screen == Screen.Ambient
-            val lively = !prefs.performance && (screen == Screen.Home || ambient)
+            val lively = prefs.liveBg && !prefs.performance && (screen == Screen.Home || ambient)
             BackdropLayer(
                 state = backdrop,
-                wash = wash,
                 dim = when (screen) {
                     Screen.Home, Screen.Ambient -> 0f
                     Screen.Sleep -> 1f
@@ -142,6 +137,8 @@ fun Root(vm: MainViewModel, onBackOnHome: () -> Unit) {
             }
 
             Toast(message)
+
+            if (prefs.showFps) FpsMeter(Modifier.align(Alignment.BottomStart))
 
             launching?.let { LaunchOverlay(it) }
 

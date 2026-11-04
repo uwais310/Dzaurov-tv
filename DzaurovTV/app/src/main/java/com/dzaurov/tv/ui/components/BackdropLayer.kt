@@ -41,7 +41,6 @@ import kotlin.math.roundToInt
 @Composable
 fun BackdropLayer(
     state: BackdropState,
-    wash: Color?,
     dim: Float,
     atmosphere: Boolean,
     particles: Boolean,
@@ -53,13 +52,17 @@ fun BackdropLayer(
     Box(modifier.fillMaxSize().background(Dz.Room)) {
         Crossfade(targetState = state.backdrop, animationSpec = tween(900), label = "backdrop") { b ->
             if (b != null) {
+                // Its own layer: the picture is drawn once and then just reused, so nothing
+                // that moves on top of it (tiles, focus, clock) makes the box redraw it.
                 Canvas(
                     Modifier.fillMaxSize().graphicsLayer {
-                        val k = kb?.value ?: 0f
-                        translationX = state.parallax.value + (k - 0.5f) * 36.dp.toPx() * (if (kb != null) 1f else 0f)
-                        val sc = 1f + 0.07f * k
-                        scaleX = sc
-                        scaleY = sc
+                        if (kb != null) {
+                            val k = kb.value
+                            translationX = (k - 0.5f) * 36.dp.toPx()
+                            val sc = 1f + 0.07f * k
+                            scaleX = sc
+                            scaleY = sc
+                        }
                     }
                 ) {
                     val w = size.width
@@ -76,9 +79,6 @@ fun BackdropLayer(
             }
         }
         if (atmosphere) Atmosphere(state.backdrop?.fog, particles)
-        Crossfade(targetState = wash, animationSpec = tween(650), label = "wash") { c ->
-            if (c != null) BrandWash(c)
-        }
         Scrims(dim)
     }
 }
@@ -95,27 +95,10 @@ private fun rememberKenBurns(): State<Float> {
 }
 
 @Composable
-private fun BrandWash(c: Color) {
-    Spacer(
-        Modifier.fillMaxSize().drawWithCache {
-            val glow = Brush.radialGradient(
-                colors = listOf(c.copy(alpha = 0.55f), c.copy(alpha = 0.16f), Color.Transparent),
-                center = Offset(size.width * 0.74f, size.height * 0.40f),
-                radius = size.width * 0.55f,
-            )
-            onDrawBehind {
-                drawRect(Color(0xFF05070C), alpha = 0.38f)
-                drawRect(glow)
-            }
-        }
-    )
-}
-
-@Composable
 private fun Scrims(dim: Float) {
     val d = animateFloatAsState(dim, tween(400), label = "dim")
     Spacer(
-        Modifier.fillMaxSize().drawWithCache {
+        Modifier.fillMaxSize().graphicsLayer().drawWithCache {
             val left = Brush.horizontalGradient(
                 0f to Color(0xA605070C), 0.38f to Color(0x4805070C), 0.62f to Color(0x0005070C),
             )
@@ -161,7 +144,8 @@ private fun Atmosphere(fog: ImageBitmap?, particles: Boolean) {
     }
     val a = remember { derivedStateOf { (clock.value % 48_000L) / 48_000f } }
     val p = remember { derivedStateOf { (clock.value % 26_000L) / 26_000f } }
-    Canvas(Modifier.fillMaxSize()) {
+    // Own layer, so its 20 updates a second never redraw the picture underneath.
+    Canvas(Modifier.fillMaxSize().graphicsLayer()) {
         val w = size.width
         val h = size.height
         if (fog != null) {

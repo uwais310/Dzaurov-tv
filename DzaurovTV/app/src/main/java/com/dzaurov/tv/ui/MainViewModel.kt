@@ -580,6 +580,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { dz.prefs.setPerformance(on) }
     }
 
+    fun setLiveBg(on: Boolean) {
+        viewModelScope.launch { dz.prefs.setLiveBg(on) }
+    }
+
+    fun setShowFps(on: Boolean) {
+        viewModelScope.launch { dz.prefs.setShowFps(on) }
+    }
+
     fun askReset() {
         prompt.value = Prompt.Reset
     }
