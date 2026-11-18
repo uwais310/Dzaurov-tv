@@ -103,7 +103,7 @@ fun WatchNextCard(
                 scaleY = scale.value
                 translationY = -4.dp.toPx() * ring.value
                 // Focus glow = the GPU's tinted drop shadow, free per frame.
-                shape = RoundedCornerShape(corner)
+                this.shape = RoundedCornerShape(corner)
                 clip = false
                 shadowElevation = (1.5f + 18f * ring.value).dp.toPx()
                 val sc = if (focused) brand else Color.Black

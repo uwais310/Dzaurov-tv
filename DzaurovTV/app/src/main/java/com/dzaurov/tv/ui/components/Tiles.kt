@@ -166,7 +166,7 @@ fun AppTile(
                 cameraDistance = 14f * density
                 // The focus glow and lift are the GPU's own drop shadow, tinted with the app's
                 // colour — it costs the box nothing per frame, unlike the old radial gradients.
-                shape = RoundedCornerShape(corner)
+                this.shape = RoundedCornerShape(corner)
                 clip = false
                 shadowElevation = (1.5f + 22f * lift.value).dp.toPx()
                 val sc = if (active) brand else Color.Black
@@ -267,7 +267,7 @@ fun AddTile(
                 scaleY = s
                 alpha = appear.value
                 translationY = -7.dp.toPx() * ring.value + (1f - appear.value) * 20.dp.toPx()
-                shape = RoundedCornerShape(corner)
+                this.shape = RoundedCornerShape(corner)
                 clip = false
                 shadowElevation = (1.5f + 16f * ring.value).dp.toPx()
                 val sc = if (focused) Color.White else Color.Black
