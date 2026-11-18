@@ -102,20 +102,13 @@ fun WatchNextCard(
                 scaleX = scale.value
                 scaleY = scale.value
                 translationY = -4.dp.toPx() * ring.value
-            }
-            .drawWithCache {
-                val pad = 16.dp.toPx()
-                val glow = Brush.radialGradient(
-                    colors = listOf(brand.copy(alpha = 0.55f), Color.Transparent),
-                    center = size.center,
-                    radius = size.maxDimension * 0.75f,
-                )
-                onDrawBehind {
-                    val a = ring.value
-                    if (!perf && a > 0.01f) {
-                        drawRect(glow, topLeft = Offset(-pad, -pad), size = Size(size.width + 2 * pad, size.height + 2 * pad), alpha = a)
-                    }
-                }
+                // Focus glow = the GPU's tinted drop shadow, free per frame.
+                shape = RoundedCornerShape(corner)
+                clip = false
+                shadowElevation = (1.5f + 18f * ring.value).dp.toPx()
+                val sc = if (focused) brand else Color.Black
+                spotShadowColor = sc
+                ambientShadowColor = sc
             }
             .onFocusChanged {
                 focused = it.isFocused

@@ -114,14 +114,8 @@ fun AppTile(
     )
     val lift = animateFloatAsState(if (active) 1f else 0f, spring(dampingRatio = 0.75f, stiffness = 420f), label = "tileLift")
     val ring = animateFloatAsState(if (active) 1f else 0f, tween(180), label = "tileRing")
-    val tint by animateColorAsState(
-        targetValue = if (active) brand.copy(alpha = 0.34f) else Color.White.copy(alpha = 0.10f),
-        animationSpec = tween(240),
-        label = "tileTint",
-    )
     val swingY = remember { Animatable(0f) }
     val swingX = remember { Animatable(0f) }
-    val gloss = remember { Animatable(-1f) }
     val appear = remember { Animatable(if (appearDelay >= 0L) 0f else 1f) }
     val bounds = remember { arrayOfNulls<Rect>(1) }
     val wiggle = if (jiggle || moving) rememberJiggle(app.packageName) else null
@@ -155,10 +149,6 @@ fun AppTile(
             )
             swingX.animateTo(0f, spring(dampingRatio = 0.42f, stiffness = 230f))
         }
-        if (!perf) launch {
-            gloss.snapTo(-0.6f)
-            gloss.animateTo(1.6f, tween(950, delayMillis = 140, easing = FastOutSlowInEasing))
-        }
     }
 
     Box(
@@ -174,28 +164,16 @@ fun AppTile(
                 rotationX = swingX.value
                 rotationZ = (wiggle?.value ?: 0f) * (if (moving) 2.2f else 1.3f)
                 cameraDistance = 14f * density
+                // The focus glow and lift are the GPU's own drop shadow, tinted with the app's
+                // colour — it costs the box nothing per frame, unlike the old radial gradients.
+                shape = RoundedCornerShape(corner)
+                clip = false
+                shadowElevation = (1.5f + 22f * lift.value).dp.toPx()
+                val sc = if (active) brand else Color.Black
+                spotShadowColor = sc
+                ambientShadowColor = sc
             }
             .onGloballyPositioned { bounds[0] = it.boundsInRoot() }
-            .drawWithCache {
-                val pad = 20.dp.toPx()
-                val glow = Brush.radialGradient(
-                    colors = listOf(brand.copy(alpha = 0.55f), Color.Transparent),
-                    center = size.center,
-                    radius = size.maxDimension * 0.72f,
-                )
-                val shadow = Brush.radialGradient(
-                    colors = listOf(Color.Black.copy(alpha = 0.45f), Color.Transparent),
-                    center = Offset(size.width / 2f, size.height * 0.8f),
-                    radius = size.maxDimension * 0.62f,
-                )
-                onDrawBehind {
-                    val a = lift.value
-                    if (!perf && a > 0.01f) {
-                        drawRect(shadow, topLeft = Offset(-pad, 0f), size = Size(size.width + 2 * pad, size.height + pad * 1.5f), alpha = a)
-                        drawRect(glow, topLeft = Offset(-pad, -pad), size = Size(size.width + 2 * pad, size.height + 2 * pad), alpha = a)
-                    }
-                }
-            }
             .onFocusChanged {
                 focused = it.isFocused
                 if (it.isFocused) onFocused()
@@ -204,7 +182,7 @@ fun AppTile(
                 val b = bounds[0]
                 if (launchFrom != null && b != null) launchFrom(b, brand) else onClick()
             }
-            .glass(corner, tint = tint)
+            .glass(corner)
     ) {
         val v = visual
         val iconSize = (height * 0.43f).coerceAtMost(44.dp)
@@ -221,13 +199,12 @@ fun AppTile(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.align(Alignment.BottomStart).padding(start = 11.dp, end = 10.dp, bottom = 8.dp),
         )
-        if (!perf) GlossSweep(corner) { gloss.value }
         Spacer(
             Modifier.matchParentSize().drawBehind {
                 val a = ring.value
                 if (a > 0.01f) {
                     drawRoundRect(
-                        Color.White.copy(alpha = 0.9f * a),
+                        Color.White.copy(alpha = 0.92f * a),
                         cornerRadius = CornerRadius(corner.toPx()),
                         style = Stroke(1.6.dp.toPx()),
                     )
@@ -260,29 +237,6 @@ fun AppTile(
     }
 }
 
-/** One soft highlight sweeping across the tile when it gains focus (translation only). */
-@Composable
-private fun BoxScope.GlossSweep(corner: Dp, position: () -> Float) {
-    Spacer(
-        Modifier.matchParentSize().clip(RoundedCornerShape(corner)).drawWithCache {
-            val bw = size.width * 0.38f
-            val brush = Brush.horizontalGradient(
-                listOf(Color.Transparent, Color.White.copy(alpha = 0.24f), Color.Transparent),
-                startX = 0f,
-                endX = bw,
-            )
-            onDrawBehind {
-                val x = position()
-                if (x > -0.55f && x < 1.55f) {
-                    translate(left = x * size.width - bw / 2f) {
-                        drawRect(brush, size = Size(bw, size.height))
-                    }
-                }
-            }
-        }
-    )
-}
-
 /** The "+" tile at the end of Favorites. */
 @Composable
 fun AddTile(
@@ -313,13 +267,19 @@ fun AddTile(
                 scaleY = s
                 alpha = appear.value
                 translationY = -7.dp.toPx() * ring.value + (1f - appear.value) * 20.dp.toPx()
+                shape = RoundedCornerShape(corner)
+                clip = false
+                shadowElevation = (1.5f + 16f * ring.value).dp.toPx()
+                val sc = if (focused) Color.White else Color.Black
+                spotShadowColor = sc
+                ambientShadowColor = sc
             }
             .onFocusChanged {
                 focused = it.isFocused
                 if (it.isFocused) onFocused()
             }
             .tvClickable(onClick = onClick)
-            .glass(corner, tint = Color.White.copy(alpha = if (focused) 0.20f else 0.07f))
+            .glass(corner, tint = Color.White.copy(alpha = if (focused) 0.18f else 0.07f))
             .drawBehind {
                 if (ring.value > 0.01f) {
                     drawRoundRect(
